@@ -5,12 +5,17 @@ from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
 from filterpy.kalman import KalmanFilter
 
+# độ nhảy cảm 
+sensible_x = 18
+sensible_y = 18
+
 # Kết nối Arduino
 port = "/dev/ttyUSB0"
 board = pyfirmata.Arduino(port)
 servo_pinX = board.get_pin('d:9:s')
 servo_pinY = board.get_pin('d:10:s')
-
+servo_pinX.write(90)
+servo_pinY.write(90)
 # Load YOLO model
 model = YOLO("yolo11n.pt")
 
@@ -28,7 +33,7 @@ kf.H = np.array([[1, 0, 0, 0],
 kf.P *= 1000
 kf.x = np.array([0, 0, 0, 0])
 
-frame_step = 5  # Số frame giữa các lần YOLO chạy 
+frame_step = 4  # Số frame giữa các lần YOLO chạy 
 ws, hs = 1280, 720 # Kích thước khung hình mong muốn
 selected_id = None  # ID của đối tượng qđang theo dõi
 
@@ -102,8 +107,8 @@ while cap.isOpened():
             predicted = kf.x[:2]
             # servo_x = np.clip(np.interp(predicted[0], [0, ws], [180, 0]), 0, 180)
             # servo_y = np.clip(np.interp(predicted[1], [0, hs], [180, 0]), 0, 180)
-            servo_x = np.interp(predicted[0], [0, ws], [180, 0])
-            servo_y = np.interp(predicted[1], [0, hs], [180, 0])
+            servo_x = np.interp(predicted[0], [0, ws], [ws/sensible_x, 0])
+            servo_y = np.interp(predicted[1], [0, hs], [10, hs/sensible_y+10])
             servo_pinX.write(servo_x)
             servo_pinY.write(servo_y)
 
